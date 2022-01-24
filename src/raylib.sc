@@ -68,7 +68,7 @@ sugar do-draw: (body...)
             rl.EndDrawing;
 
 sugar do-window: (width height title fps body...)
-    let width height title
+    let width height title fps
     qq
         do
             rl.InitWindow
