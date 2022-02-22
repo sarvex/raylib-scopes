@@ -10,6 +10,7 @@ using rl.macros
 let
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 450
+    FPS = 60
     G = 400
     PLAYER_JUMP_SPEED = 350.0:f32
     PLAYER_HOR_SPEED = 200.0:f32
@@ -27,7 +28,9 @@ struct EnvItem
     color : rl.Color
 
 ## Update functions
-fn update_player (player env-items delta)
+fn update-player (player env-items delta)
+
+    print (typeof delta)
 
     if (rl.IsKeyDown rl.KEY_LEFT)
         ((player . position) . x) -= (PLAYER_HOR_SPEED * delta)
@@ -35,41 +38,37 @@ fn update_player (player env-items delta)
     if (rl.IsKeyDown rl.KEY_RIGHT)
         ((player . position) . x) += (PLAYER_HOR_SPEED * delta)
 
-    if ((rl.IsKeyDown rl.KEY_SPACE) and (player.can-jump))
+    if ((rl.IsKeyDown rl.KEY_SPACE) and (deref player.can-jump))
         (player . speed) = -PLAYER_JUMP_SPEED
         (player . can-jump) = false
 
-    local hit-obstacle = 0
-    for env-item in env-items
+    ;
 
-        let player-position = (player . position)
-        if (env-item.blocking and
-            ((((env-item . rect) . x) + ((env-item . rect) . width)) >= player-position.x) and
-            (((env-item . rect) . y) >= player-position.y) and
-            (((env-item . rect) . y) < player-position.y + (player.speed * delta))
-        )
-            hit-obstacle = 1
-            (player . speed) = 0.0:f32
-            (player-position . y) = ((env-item . speed) . y)
+    # if ((rl.IsKeyDown rl.KEY_SPACE) and player.can-jump)
+    #     (player . speed) = -PLAYER_JUMP_SPEED
+    #     (player . can-jump) = false
 
-    if (not hit-obstacle)
-        ((player . position) . y) += (player.speed * delta)
-        (player . speed) += (G * delta)
-        (player . can-jump) = false
-    else
-        (player . can-jump) = true
+    # local hit-obstacle = 0
+    # for env-item in env-items
 
-fn update-camera-center ()
-    
+    #     let player-position = (player . position)
+    #     if (env-item.blocking and
+    #         ((((env-item . rect) . x) + ((env-item . rect) . width)) >= player-position.x) and
+    #         (((env-item . rect) . y) >= player-position.y) and
+    #         (((env-item . rect) . y) < player-position.y + (player.speed * delta))
+    #     )
+    #         hit-obstacle = 1
+    #         (player . speed) = 0.0:f32
+    #         (player-position . y) = ((env-item . speed) . y)
 
-fn update-camera-center-inside-map ()
-    
+    # if (not hit-obstacle)
+    #     ((player . position) . y) += (player.speed * delta)
+    #     (player . speed) += (G * delta)
+    #     (player . can-jump) = false
+    # else
+    #     (player . can-jump) = true
 
-fn update-camera-even-out-on-landing ()
-    
 
-fn update-camera-player-bounds-push ()
-    
 
 
 
@@ -105,14 +104,40 @@ local env-items =
             rl.Colors.GRAY
 
 let env-items-len = (countof env-items)
+
+
 ## Camera
 
-let camera-update-funcs =
-    Array 
-        
+# in the original code they used function pointers to dispatch to the
+# right function. In Scopes we have something way better than function
+# pointers... Scopes.
 
-local camera-option = 0
-local campera-updaters-length = 
+# create the scope for the camera update functions
+
+# 
+fn update-camera-center (camera player env_items env_items_len delta width height)
+
+fn update-camera-center-inside-map (camera player env_items env_items_len delta width height)
+    
+
+fn update-camera-even-out-on-landing (camera player env_items env_items_len delta width height)
+    
+
+fn update-camera-player-bounds-push (camera player env_items env_items_len delta width height)
+    
+
+
+let camera-update-funcs =
+    do
+        let
+            camera-center = update-camera-center
+            camera-center-inside-map = update-camera-center-inside-map
+            camera-even-out-on-landing = update-camera-even-out-on-landing
+            camera-player-bounds-push = update-camera-player-bounds-push
+
+
+# the variables that control which camera function to use
+local camera-option = 'camera-center
 
 local camera =
     rl.Camera2D
@@ -122,23 +147,31 @@ local camera =
         1.0:f32
 
 let camera-descriptions =
-    Array string
+    (Array string)
         "Follow player center"
         "Follow player center, but clamp to map edges"
         "Follow player center; smoothed"
         "Follow player center horizontally; updateplayer center vertically after landing"
         "Player push camera on getting too close to screen edge"
 
+# if ((rl.IsKeyDown rl.KEY_SPACE) and (deref player.can-jump))
+#     (player . speed) = -PLAYER_JUMP_SPEED
+#     (player . can-jump) = false
+
+
 do-window:
     SCREEN_WIDTH
     SCREEN_HEIGHT
     "raylib [core] Scopes example - core basic window"
-    60
+    FPS
 
-    local delta-time = rl.GetFrameTime;
+    local delta-time = ((rl.GetFrameTime) as f32)
 
-    (update_player player env-items env-items-len delta-time)
+    (update-player player env-items delta-time)
 
-    do-draw:
+    # do-draw:
 
-        rl.ClearBackground rl.Colors.LIGHTGRAY
+    #     rl.ClearBackground rl.Colors.LIGHTGRAY
+
+# don't accidentally try to export something which is unique
+;
