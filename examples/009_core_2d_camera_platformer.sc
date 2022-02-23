@@ -24,49 +24,69 @@ struct Player
 
 struct EnvItem
     rect : rl.Rectangle
-    blocking : i32
     color : rl.Color
+    blocking : bool
+
 
 ## Update functions
 fn update-player (player env-items delta)
 
-    print (typeof delta)
-
     if (rl.IsKeyDown rl.KEY_LEFT)
-        ((player . position) . x) -= (PLAYER_HOR_SPEED * delta)
+        (. player position x) -= (PLAYER_HOR_SPEED * delta)
 
     if (rl.IsKeyDown rl.KEY_RIGHT)
-        ((player . position) . x) += (PLAYER_HOR_SPEED * delta)
+        (. player position x) += (PLAYER_HOR_SPEED * delta)
 
-    if ((rl.IsKeyDown rl.KEY_SPACE) and (deref player.can-jump))
-        (player . speed) = -PLAYER_JUMP_SPEED
-        (player . can-jump) = false
+    # NOTE: the `deref` is needed because of a bug in the compiler's
+    # typechecking, remove when fixed.
+    if
+        and
+            (rl.IsKeyDown rl.KEY_SPACE)
+            (deref player.can-jump)
 
-    ;
+        player.speed = -PLAYER_JUMP_SPEED
+        player.can-jump = false
 
-    # if ((rl.IsKeyDown rl.KEY_SPACE) and player.can-jump)
-    #     (player . speed) = -PLAYER_JUMP_SPEED
-    #     (player . can-jump) = false
 
-    # local hit-obstacle = 0
-    # for env-item in env-items
+    if
+        and
+            (rl.IsKeyDown rl.KEY_SPACE)
+            (deref player.can-jump)
 
-    #     let player-position = (player . position)
-    #     if (env-item.blocking and
-    #         ((((env-item . rect) . x) + ((env-item . rect) . width)) >= player-position.x) and
-    #         (((env-item . rect) . y) >= player-position.y) and
-    #         (((env-item . rect) . y) < player-position.y + (player.speed * delta))
-    #     )
-    #         hit-obstacle = 1
-    #         (player . speed) = 0.0:f32
-    #         (player-position . y) = ((env-item . speed) . y)
+        player.speed = -PLAYER_JUMP_SPEED
+        player.can-jump = false
 
-    # if (not hit-obstacle)
-    #     ((player . position) . y) += (player.speed * delta)
-    #     (player . speed) += (G * delta)
-    #     (player . can-jump) = false
-    # else
-    #     (player . can-jump) = true
+    local hit-obstacle = false
+    for env-item in env-items
+
+        let player-position = player.position
+
+
+        if
+            and
+                deref env-item.blocking
+                >=
+                    (. env-item rect x) + (. env-item rect width)
+                    player-position.x
+                >=
+                    (. env-item rect y)
+                    player-position.y
+                <
+                    (. env-item rect y)
+                    player-position.y + (player.speed * delta)
+
+            print "hit obstacle"
+
+            hit-obstacle = 1
+            player.speed = 0.0
+            player-position.y = (. env-item rect y)
+
+    if (not hit-obstacle)
+        (player.position . y) += (player.speed * delta)
+        player.speed += (G * delta)
+        player.can-jump = false
+    else
+        player.can-jump = true
 
 
 
@@ -80,28 +100,35 @@ local player =
         (speed = 0:f32)
         (can-jump = false)
 
+local player_rectangle =
+    rl.Rectangle
+        (x = (player.position.x - 20))
+        (y = (player.position.y - 40))
+        (width = 40)
+        (height = 40)
+
 local env-items =
     (Array EnvItem)
         EnvItem
             (rect = (rl.Rectangle 0 0 1000 400))
-            (blocking = 0)
             (color = rl.Colors.LIGHTGRAY)
+            (blocking = false)
         EnvItem
             (rl.Rectangle 0 400 1000 200)
-            1
             rl.Colors.GRAY
+            true
         EnvItem
             (rl.Rectangle 300 200 400 10)
-            1
             rl.Colors.GRAY
+            true
         EnvItem
             (rl.Rectangle 250 300 100 10)
-            1
             rl.Colors.GRAY
+            true
         EnvItem
             (rl.Rectangle 650 300 100 10)
-            1
             rl.Colors.GRAY
+            true
 
 let env-items-len = (countof env-items)
 
@@ -154,11 +181,6 @@ let camera-descriptions =
         "Follow player center horizontally; updateplayer center vertically after landing"
         "Player push camera on getting too close to screen edge"
 
-# if ((rl.IsKeyDown rl.KEY_SPACE) and (deref player.can-jump))
-#     (player . speed) = -PLAYER_JUMP_SPEED
-#     (player . can-jump) = false
-
-
 do-window:
     SCREEN_WIDTH
     SCREEN_HEIGHT
@@ -169,9 +191,29 @@ do-window:
 
     (update-player player env-items delta-time)
 
-    # do-draw:
+    camera.zoom += ((rl.GetMouseWheelMove) * 0.05)
 
-    #     rl.ClearBackground rl.Colors.LIGHTGRAY
+    # update the player glyph
+    player_rectangle.x = (player.position.x - 20)
+    player_rectangle.x = (player.position.y - 40)
+
+    do-draw:
+
+        rl.ClearBackground rl.Colors.LIGHTGRAY
+
+        # Do 2D drawing
+        rl.BeginMode2D camera
+
+        # draw the environment
+        for env_item in env-items
+            rl.DrawRectangleRec
+                env_item.rect
+                env_item.color
+
+        # draw the player
+        rl.DrawRectangleRec player_rectangle rl.Colors.RED
+
+        rl.EndMode2D;
 
 # don't accidentally try to export something which is unique
 ;
