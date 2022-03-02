@@ -31,66 +31,58 @@ struct EnvItem
 ## Update functions
 fn update-player (player env-items delta)
 
+    # horizontal movement
     if (rl.IsKeyDown rl.KEY_LEFT)
+        print "left key"
         (. player position x) -= (PLAYER_HOR_SPEED * delta)
 
     if (rl.IsKeyDown rl.KEY_RIGHT)
+        print "right key"
         (. player position x) += (PLAYER_HOR_SPEED * delta)
 
-    # NOTE: the `deref` is needed because of a bug in the compiler's
-    # typechecking, remove when fixed.
+    # handle jumping
     if
         and
             (rl.IsKeyDown rl.KEY_SPACE)
-            (deref player.can-jump)
+            player.can-jump
 
+        print "jump"
         player.speed = -PLAYER_JUMP_SPEED
         player.can-jump = false
 
 
-    if
-        and
-            (rl.IsKeyDown rl.KEY_SPACE)
-            (deref player.can-jump)
-
-        player.speed = -PLAYER_JUMP_SPEED
-        player.can-jump = false
-
+    # handle collisions
     local hit-obstacle = false
+
+    # check for collision with each obstacle
     for env-item in env-items
-
-        let player-position = player.position
-
 
         if
             and
-                deref env-item.blocking
+                env-item.blocking
                 >=
                     (. env-item rect x) + (. env-item rect width)
-                    player-position.x
+                    (player . position . x)
                 >=
                     (. env-item rect y)
-                    player-position.y
+                    (player . position . y)
                 <
                     (. env-item rect y)
-                    player-position.y + (player.speed * delta)
+                    (player . position . y) + (player.speed * delta)
 
-            print "hit obstacle"
+            # print "hit obstacle"
 
             hit-obstacle = 1
             player.speed = 0.0
-            player-position.y = (. env-item rect y)
+            (player . position . y) = (. env-item rect y)
 
+    # modulate movement based on collision status
     if (not hit-obstacle)
         (player.position . y) += (player.speed * delta)
         player.speed += (G * delta)
         player.can-jump = false
     else
         player.can-jump = true
-
-
-
-
 
 ## Main
 
@@ -103,28 +95,35 @@ local player =
 local player_rectangle =
     rl.Rectangle
         (x = (player.position.x - 20))
-        (y = (player.position.y - 40))
+        (y = player.position.y - 40)
         (width = 40)
         (height = 40)
 
 local env-items =
     (Array EnvItem)
-        EnvItem
-            (rect = (rl.Rectangle 0 0 1000 400))
-            (color = rl.Colors.LIGHTGRAY)
-            (blocking = false)
+        # Ground
+        # EnvItem
+        #     (rect = (rl.Rectangle 0 0 1000 400))
+        #     (color = rl.Colors.LIGHTGRAY)
+        #     (blocking = false)
+
+        # Ground
         EnvItem
             (rl.Rectangle 0 400 1000 200)
             rl.Colors.GRAY
             true
+
+        # Top platform
         EnvItem
             (rl.Rectangle 300 200 400 10)
             rl.Colors.GRAY
             true
+        # left small platform
         EnvItem
             (rl.Rectangle 250 300 100 10)
             rl.Colors.GRAY
             true
+        # right small platform
         EnvItem
             (rl.Rectangle 650 300 100 10)
             rl.Colors.GRAY
@@ -189,13 +188,14 @@ do-window:
 
     local delta-time = ((rl.GetFrameTime) as f32)
 
+    # update the player's position
     (update-player player env-items delta-time)
 
     camera.zoom += ((rl.GetMouseWheelMove) * 0.05)
 
     # update the player glyph
-    player_rectangle.x = (player.position.x - 20)
-    player_rectangle.x = (player.position.y - 40)
+    player_rectangle.x = player.position.x
+    player_rectangle.y = player.position.y
 
     do-draw:
 
