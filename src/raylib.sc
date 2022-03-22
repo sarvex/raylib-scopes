@@ -1,16 +1,8 @@
-# this loads the site specific packaging information
-let pkg = (import ..pkg)
 
-let header =
-    include
-        "raylib.h"
-        options
-            # "-v"
-            .. "-I" pkg.include-path
-
-let raylib-lib-path = (.. pkg.lib-path "/libraylib.so")
-
-load-library raylib-lib-path
+# load the header and object, these should be configured in the
+# `package` symbol, which can be customized via _project.sc files
+let header = (include "raylib.h")
+project-library "libraylib.so"
 
 # add the colors since they don't get parse properly from the header
 let Color = header.struct.Color
