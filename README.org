@@ -1,43 +1,46 @@
 
 * Scopes Raylib Bindings
 
-Scopes language: https://scopes.rocks
-
-Scopes doesn't have a package manager and you really don't need it
-since it can load C code natively.
+Bindings of [[https://github.com/raysan5/raylib][Raylib]] for the [[https://scopes.rocks][Scopes]] programming language.
 
 This is an incredibly thin wrapper as such and you can basically use
-the raylib C-API with scopes notation.
+the raylib C-API with Scopes notation. Some of the naming prefixes
+have been scrubbed to make calling things less verbose.
 
 There are a few macros added for "begin-end" type constructs that you
 can see in use in the examples, but you don't need to use them.
 
-
 ** Installation
 
-Assuming you have raylib downloaded and compiled in your project
-folder; just copy-paste the ~src/raylib.sc~ into your scopes project
-and add a file like ~pkg.src~ which defines the paths to the headers
-and compiled objects.
+The module is under ~src/raylib~. You can copy this subtree into your
+project and then add it to the ~package.path~ in your Scopes
+~_project.sc~ file.
 
-** Running
+You will need to make sure that ~raylib.h~ can be found on
+~package.include-path~ and ~libraylib.so~ can be found in
+~package.library-path~.
 
-Then you can run the examples:
+*** With Spack
+
+This module is available as the ~scopes-raylib~ package in the
+[[https://github.com/salotz/snailpacks][snailpacks]] repository. This will pull in the necessary dependencies
+including Scopes and Raylib.
 
 #+begin_src sh
-  scopes ./examples/01_core_basic_window.sc
+  spack install scopes-raylib
 #+end_src
 
-*** Optional Installation of Raylib with Spack
+See the [[https://github.com/salotz/snailpacks][snailpacks]] documentation for more best practices of installing.
 
-Here is an example of using [[https://spack.io/][Spack]] to install dependencies. First
-install Spack.
+** Development Environment
+
+We use [[https://spack.io/][Spack]] to install dependencies. First install Spack.
 
 Then you'll need our custom repo of build recipes:
 
 #+begin_src sh
-  mkdir -p ~/resources/spack-repos
-  git clone git@github.com:salotz/snailpacks.git ~/resources/spack-repos/snailpacks
+  mkdir -p ~/.spack/repos
+  git clone git@github.com:salotz/snailpacks.git ~/.spack/repos/snailpacks
   spack repo add ~/resources/spack-repos/snailpacks
 #+end_src
 
@@ -58,26 +61,14 @@ appropriately) and install the packages:
 
 Note that the first time running this could take quite a while since
 Spack actually compiles *all* of the dependencies from scratch and
-doesn't use your system packages at all.
+doesn't use your system packages at all. The biggest of these being
+LLVM, if you haven't already installed Scopes with Spack. This only
+needs to be done once per LLVM version.
 
-
-Once this is done the examples should just work. The ~pkg.sc~ file is
-a kind of locale specific file that gives the paths to the include and
-library directories which can be loaded from scopes. The one
-distributed here uses the default path for spack envs in a folder
-~./.spack-env/view~.
-
-You can add other dependencies by either using the spack command line
-tools or editing the ~spack.yaml~ file.
-
-The ~spack.lock~ file has the full listing of concrete
-dependencies. For developing on the same machine you can keep this
-around to be 100% reproducible.
-
-To rebuild the ~spack.lock~ file run and update dependencies:
+At this point you can run examples etc. providing the ~-p~ flag:
 
 #+begin_src sh
-  spack concretize --force
+  scopes -p ./examples/001_core_basic_window.sc
 #+end_src
 
 To exit the environment (i.e. unset the env variables):
@@ -86,4 +77,15 @@ To exit the environment (i.e. unset the env variables):
   despacktivate
 #+end_src
 
+
+
+** Running Examples
+
+First install the development environment as above then you can run them.
+
+Then you can run the examples with the ~-p~ flag:
+
+#+begin_src sh
+  scopes -p ./examples/01_core_basic_window.sc
+#+end_src
 

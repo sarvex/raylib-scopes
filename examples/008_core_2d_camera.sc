@@ -1,5 +1,5 @@
 
-let rl = (import ..src.raylib)
+let rl = (import raylib.raylib)
 using rl.macros
 
 let MAX_BUILDINGS = 100

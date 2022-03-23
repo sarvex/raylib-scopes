@@ -3,7 +3,7 @@
 using import struct
 using import Array
 
-let rl = (import ..src.raylib)
+let rl = (import raylib.raylib)
 using rl.macros
 
 ## Screen

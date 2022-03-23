@@ -4,7 +4,7 @@ using import Array
 using import itertools
 using import struct
 
-let rl = (import ..src.raylib)
+let rl = (import raylib.raylib)
 using rl.macros
 
 struct FontDisplay

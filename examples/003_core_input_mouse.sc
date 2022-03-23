@@ -1,6 +1,6 @@
 #!/usr/bin/env scopes
 
-let rl = (import ..src.raylib)
+let rl = (import raylib.raylib)
 using rl.macros
 
 let
