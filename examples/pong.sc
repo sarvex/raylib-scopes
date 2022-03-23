@@ -23,12 +23,26 @@ let
     PADDLE_SPEED = 200.0
     PADDLE_WIDTH = 10
     PADDLE_LENGTH = 100
-    PADDLE_ARENA_BUFFER = 10
-    PLAYER_1_COLOR = rl.Colors.RED
+    PADDLE_ARENA_BUFFER = 20
+    PLAYER_1_COLOR = rl.Colors.PURPLE
     PLAYER_2_COLOR = rl.Colors.BLUE
+    ARENA_WIDTH = (SCREEN_WIDTH - 50)
+    ARENA_HEIGHT = (SCREEN_HEIGHT - 50)
     ARENA_BORDER_THICKNESS = 10
     ARENA_BORDER_COLOR = rl.Colors.WHITE
     ARENA_BACKGROUND_COLOR = rl.Colors.BLACK
+
+let SCREEN_CENTER =
+    rl.Vector2
+        (SCREEN_WIDTH / 2)
+        (SCREEN_HEIGHT / 2)
+
+# the arena should start centered in the screen
+let ARENA_STARTING_POSITION =
+    rl.Vector2
+        ((SCREEN_WIDTH / 2) - (ARENA_WIDTH / 2))
+        ((SCREEN_HEIGHT / 2) - (ARENA_HEIGHT / 2))
+
 
 ## Structs
 
@@ -69,34 +83,97 @@ struct Scene
     player1 : Paddle
     player2 : Paddle
     ball : Ball
+    arena-sprite : Arena_Sprite
+    player1-sprite : Paddle_Sprite
+    player2-sprite : Paddle_Sprite
+    ball-sprite : Ball_Sprite
 
 ## Math
 
-fn length_Vector2 (vec)
-    sqrt ((vec.x * vec.x) + (vec.y * vec.y))
+# fn check-collision-circle-rect (center radius rect)
+
+#     local collision = false
+
+#     let
+#         # center of the rectangle
+#         rect-center-x = ((rect . x) + (rect.width / 2.0) as i32)
+#         rect-center-y = ((rect . y) + (rect.height / 2.0) as i32)
+#         # difference between them in each dimension
+#         dx = (abs center.x - (rect-center-x as f32))
+#         dy = (abs center.y - (rect-center-y as f32))
+
+#     # quick check for no collision
+#     if (dx > ((rect.width / 2.0) + radius))
+#         return false
+
+#     if (dy > ((rect.height / 2.0) + radius))
+#         return false
+
+#     # quick check for collision
+#     if (dx <= (rect.width / 2.0))
+#         return true
+
+#     if (dy <= (rect.height / 2.0))
+#         return true
+
+#     # if nothing else passed check the corners
+
+#     return collision
 
 ## Functions
-fn update-ball (delta ball)
 
-    # calculate the new velocity if necessary
+fn update-ball (delta scene)
+
+    # calculate the new velocity of the ball if necessary
 
     # first detect collisions with paddles
-    # for paddle in 
+
+    # player1 paddle
+    if
+        rl.CheckCollisionCircleRec
+            (scene . ball . position)
+            (scene . ball . radius)
+            (scene . player1-sprite . rect)
+
+        (scene . ball . velocity . x) *= -1
+
+    elseif
+        rl.CheckCollisionCircleRec
+            (scene . ball . position)
+            (scene . ball . radius)
+            (scene . player2-sprite . rect)
+
+        (scene . ball . velocity . x) *= -1
+
 
     # apply the velocity to the position
-    (ball . position . x) += (ball . velocity . x)
-    (ball . position . y) += (ball . velocity . y)
+    (scene . ball . position . x) += (scene . ball . velocity . x)
+    (scene . ball . position . y) += (scene . ball . velocity . y)
 
-fn update-paddle (delta paddle)
+fn update-player-paddle (delta scene)
 
     if (rl.IsKeyDown rl.KEY_UP)
-        (paddle . position . y) -= (paddle.speed * delta)
+        (scene . player1 . position . y) -= (scene . player1 . speed * delta)
 
     elseif (rl.IsKeyDown rl.KEY_DOWN)
-        (paddle . position . y) += (paddle.speed * delta)
+        (scene . player1 . position . y) += (scene . player1 . speed * delta)
 
+fn update-enemy-paddle (delta scene)
 
-# fn update-scene (delta scene)
+    # up
+    if (rl.IsKeyDown rl.KEY_W)
+        (scene . player2 . position . y) -= (scene . player2 . speed * delta)
+
+    # down
+    elseif (rl.IsKeyDown rl.KEY_S)
+        (scene . player2 . position . y) += (scene . player2 . speed * delta)
+
+fn update-scene (delta scene)
+
+    (update-ball delta scene)
+    (update-player-paddle delta scene)
+    (update-enemy-paddle delta scene)
+
 
 fn draw-paddle (paddle paddle_sprite)
 
@@ -109,7 +186,11 @@ fn draw-paddle (paddle paddle_sprite)
         paddle_sprite.rect
         paddle_sprite.color
 
-fn draw-ball (ball ball_sprite)
+fn draw-ball (scene)
+
+    let
+        ball_sprite = (scene . ball-sprite)
+        ball = (scene . ball)
 
     # update the sprite
     (ball_sprite . position . x) = (ball . position . x)
@@ -121,31 +202,36 @@ fn draw-ball (ball ball_sprite)
         ball_sprite.radius
         ball_sprite.color
 
-fn draw-arena (arena arena_sprite)
+fn draw-arena (scene)
 
     # update the sprite
-    (arena_sprite . rect . x) = (arena . position . x)
-    (arena_sprite . rect . y) = (arena . position . y)
+    (scene . arena-sprite . rect . x) = (scene . arena . position . x)
+    (scene . arena-sprite . rect . y) = (scene . arena . position . y)
 
     # draw the arena
     rl.DrawRectangleRec
-        arena_sprite.rect
-        arena_sprite.background-color
+        (scene . arena-sprite . rect)
+        (scene . arena-sprite . background-color)
 
     rl.DrawRectangleLinesEx
-        arena_sprite.rect
-        arena_sprite.border-thickness
-        arena_sprite.border-color
+        (scene . arena-sprite . rect)
+        (scene . arena-sprite . border-thickness)
+        (scene . arena-sprite . border-color)
 
-# fn draw-scene (scene)
+fn draw-scene (scene)
+    draw-arena scene
+    draw-paddle (scene . player1) (scene . player1-sprite)
+    draw-paddle (scene . player2) (scene . player2-sprite)
+    draw-ball scene
+
 
 ## Scene
 
 local arena =
     Arena
-        (position = (rl.Vector2 0.0 0.0))
-        (width = SCREEN_WIDTH)
-        (height = SCREEN_HEIGHT)
+        position = ARENA_STARTING_POSITION
+        (width = ARENA_WIDTH)
+        (height = ARENA_HEIGHT)
         (wall-thickness = ARENA_BORDER_THICKNESS)
 
 local paddle1 =
@@ -168,20 +254,12 @@ local paddle2 =
         PADDLE_LENGTH
         PADDLE_SPEED
 
-let SCREEN_CENTER =
-    rl.Vector2
-        (SCREEN_WIDTH / 2)
-        (SCREEN_HEIGHT / 2)
-
-
 local ball =
     Ball
         (position = SCREEN_CENTER)
         velocity =
             rl.Vector2 -3.0 0.0
         BALL_RADIUS
-
-
 
 local paddle1_sprite =
     Paddle_Sprite
@@ -219,10 +297,16 @@ local arena_sprite =
         border-color = ARENA_BORDER_COLOR
         background-color = ARENA_BACKGROUND_COLOR
 
-# local scene =
-#     Scene
-        
-
+local scene =
+    Scene
+        arena
+        (player1 = paddle1)
+        (player2 = paddle2)
+        ball
+        arena_sprite
+        paddle1_sprite
+        paddle2_sprite
+        ball_sprite
 
 # camera
 local camera =
@@ -247,17 +331,11 @@ do-window:
 
         rl.ClearBackground BACKGROUND_COLOR
 
-        (update-ball delta-time ball)
-        (update-paddle delta-time paddle1)
-        # (update-paddle delta-time paddle2)
+        (update-scene delta-time scene)
 
         # Do 2D drawing
         rl.BeginMode2D camera
 
-        draw-arena arena arena_sprite
-
-        draw-paddle paddle1 paddle1_sprite
-        draw-paddle paddle2 paddle2_sprite
-        draw-ball ball ball_sprite
+        (draw-scene scene)
 
         rl.EndMode2D;
