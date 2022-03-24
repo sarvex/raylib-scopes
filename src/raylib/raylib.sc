@@ -2,7 +2,7 @@
 # load the header and object, these should be configured in the
 # `package` symbol, which can be customized via _project.sc files
 let header = (include "raylib.h")
-project-library "libraylib.so"
+shared-library "libraylib.so"
 
 # add the colors since they don't get parse properly from the header
 let Color = header.struct.Color
