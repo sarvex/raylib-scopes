@@ -13,7 +13,7 @@ can see in use in the examples, but you don't need to use them.
 
 ## Installation
 
-The module is under `src/scopes-raylib`. You can copy this subtree into your
+The module is under `src/raylib`. You can copy this subtree into your
 project and then add it to the `package.path` in your Scopes
 `_project.sc` file.
 
@@ -54,18 +54,6 @@ appropriately) and install the packages:
 ```sh
   spacktivate .
   spack install
-```
-
-Note that the first time running this could take quite a while since
-Spack actually compiles *all* of the dependencies from scratch and
-doesn't use your system packages at all. The biggest of these being
-LLVM, if you haven't already installed Scopes with Spack. This only
-needs to be done once per LLVM version.
-
-At this point you can run examples etc. providing the `-p` flag:
-
-```sh
-  scopes -p ./examples/001_core_basic_window.sc
 ```
 
 To exit the environment (i.e. unset the env variables):

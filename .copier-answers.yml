@@ -1,6 +1,6 @@
 {
-    "_commit": "v0.5",
+    "_commit": "v0.6",
     "_src_path": "gh:salotz/scopes-lib_copier-template",
-    "main_module_name": "scopes-raylib",
+    "main_module_name": "raylib",
     "package_name": "scopes-raylib"
 }
